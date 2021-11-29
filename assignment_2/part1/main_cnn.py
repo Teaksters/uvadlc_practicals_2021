@@ -35,6 +35,9 @@ from torchvision import transforms
 from augmentations import gaussian_noise_transform, gaussian_blur_transform, contrast_transform, jpeg_transform
 from cifar10_utils import get_train_validation_set, get_test_set
 
+from tqdm import tqdm
+import pickle
+
 
 def set_seed(seed):
     """
@@ -51,11 +54,11 @@ def set_seed(seed):
 
 def get_model(model_name, num_classes=10):
     """
-    Returns the model architecture for the provided model_name. 
+    Returns the model architecture for the provided model_name.
 
     Args:
-        model_name: Name of the model architecture to be returned. 
-                    Options: ['debug', 'vgg11', 'vgg11_bn', 'resnet18', 
+        model_name: Name of the model architecture to be returned.
+                    Options: ['debug', 'vgg11', 'vgg11_bn', 'resnet18',
                               'resnet34', 'densenet121']
                     All models except debug are taking from the torchvision library.
         num_classes: Number of classes for the final layer (for CIFAR10 by default 10)
@@ -104,22 +107,75 @@ def train_model(model, lr, batch_size, epochs, data_dir, checkpoint_name, device
     #######################
     # PUT YOUR CODE HERE  #
     #######################
-    
-    # Load the datasets
-    pass
 
-    # Initialize the optimizers and learning rate scheduler. 
-    # We provide a recommend setup, which you are allowed to change if interested.
+    # Load the datasets
+    train, val = get_train_validation_set(data_dir)
+
+    # Initialize dataloaders
+    tr_loader = data.DataLoader(train, batch_size=batch_size, shuffle=True,
+                                drop_last=False)
+    val_loader = data.DataLoader(val, batch_size=batch_size, shuffle=False,
+                                 drop_last=False)
+
+    # Initialize the optimizers and learning rate scheduler.
     optimizer = torch.optim.SGD(model.parameters(), lr=lr,
                                 momentum=0.9, weight_decay=5e-4)
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[90, 135], gamma=0.1)
-    
-    # Training loop with validation after each epoch. Save the best model, and remember to use the lr scheduler.
-    pass
-    
+    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer,
+                                                     milestones=[90, 135],
+                                                     gamma=0.1)
+
+    # Initialize loss module
+    loss_module = nn.CrossEntropyLoss()
+
+    # Save the best model, and remember to use the lr scheduler.
+    val_scores = []
+    train_losses, train_scores = [], []
+    best_val_epoch = -1
+    for epoch in range(epochs):
+        # Training the model with the train set
+        model.train()
+        true_preds, count = 0., 0
+        t = tqdm(tr_loader, leave=False)
+        for imgs, labels in t:
+            # Reset gradients and push data to model location
+            imgs, labels = imgs.to(device), labels.to(device)
+            optimizer.zero_grad()
+
+            # Forward input through model and calculate loss
+            preds = model(imgs)
+            loss = loss_module(preds, labels)
+
+            # Perform backpropogation with gradients of the loss
+            loss.backward()
+            optimizer.step()
+
+            # Record training statistics
+            true_preds += (preds.argmax(dim=-1) == labels).sum().item()
+            count += labels.shape[0]
+            t.set_description(f"Epoch {epoch+1}: loss={loss.item():4.2f}")
+            train_losses.append(loss.item())
+        train_acc = true_preds / count
+        train_scores.append(train_acc)
+
+        # Update learning rate
+        scheduler.step()
+
+        # Evaluate model on validation set
+        val_acc = evaluate_model(model, val_loader, device)
+        val_scores.append(val_acc)
+        print(f"[Epoch {epoch+1:2d}] Training accuracy: {train_acc*100.0:05.2f}%, Validation accuracy: {val_acc*100.0:05.2f}%")
+
+        # Store the best performing model
+        print(val_scores, best_val_epoch)
+        if len(val_scores) == 1 or val_acc > val_scores[best_val_epoch]:
+            print("\t   (New best performance, saving model...)")
+            torch.save(model, checkpoint_name)
+            best_val_epoch = epoch
+
+
     # Load best model and return it.
-    pass
-    
+    model = torch.load(checkpoint_name)
+    model.eval()
     #######################
     # END OF YOUR CODE    #
     #######################
@@ -144,7 +200,21 @@ def evaluate_model(model, data_loader, device):
     #######################
     # PUT YOUR CODE HERE  #
     #######################
-    pass
+    # Set model to evaluation mode
+    model.eval()
+    true_preds, count = 0., 0
+
+    # Loop over the provided dataset
+    for imgs, labels in data_loader:
+        imgs, labels = imgs.to(device), labels.to(device)
+        # Evaluate model performance with accuracy measures
+        with torch.no_grad():
+            preds = model(imgs).argmax(dim=-1)
+            true_preds += (preds == labels).sum().item()
+            count += labels.shape[0]
+    # Normalize the accuracy to be between 0 and 1
+    accuracy = true_preds / count
+
     #######################
     # END OF YOUR CODE    #
     #######################
@@ -167,7 +237,7 @@ def test_model(model, batch_size, data_dir, device, seed):
 
     TODO:
     Evaluate the model on the plain test set. Make use of the evaluate_model function.
-    For each corruption function and severity, repeat the test. 
+    For each corruption function and severity, repeat the test.
     Summarize the results in a dictionary (the structure inside the dict is up to you.)
     """
     #######################
@@ -175,10 +245,32 @@ def test_model(model, batch_size, data_dir, device, seed):
     #######################
     set_seed(seed)
     test_results = {}
-    pass
+
+    # Augmentation settings
+    augmentations = [gaussian_noise_transform, gaussian_blur_transform,
+                     contrast_transform, jpeg_transform]
+    severity = np.arange(1, 6)
+
+    # Loop over all types of augmentation and severities
+    for augmentation in augmentations:
+        for sev in severity:
+            # Prepare data loaders
+            test = get_test_set(data_dir,
+                                augmentation=augmentation(severity=sev))
+            test_loader = data.DataLoader(test, batch_size=batch_size,
+                                          shuffle=False, drop_last=False)
+
+            # Evaluate model performance
+            test_acc = evaluate_model(model, test_loader, device)
+
+            # Store results
+            aug = str(augmentation).split()[1]
+            print('Tested: ', aug, sev)
+            test_results[(aug, sev)] = test_acc
     #######################
     # END OF YOUR CODE    #
     #######################
+    print('Done!')
     return test_results
 
 
@@ -205,9 +297,31 @@ def main(model_name, lr, batch_size, epochs, data_dir, seed):
     #######################
     # PUT YOUR CODE HERE  #
     #######################
+    # Create a checkpoints folder for model storage
+    CHECKPOINT_PATH = 'chkpts'
+    RESULT_PATH = 'rslts'
+    os.makedirs(CHECKPOINT_PATH, exist_ok=True)
+    os.makedirs(RESULT_PATH, exist_ok=True)
+    checkpoint_name = os.path.join(CHECKPOINT_PATH, model_name)
+    result_name = os.path.join(RESULT_PATH, model_name + '.pkl')
+
+    # Prepare devices and seeds
     device = torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
     set_seed(seed)
-    pass
+
+    # Initialize desired model
+    model = get_model(model_name)
+    model.to(device)
+
+    # Train model on the CIFAR10 dataset
+    model = train_model(model, lr, batch_size, epochs, data_dir,
+                        checkpoint_name, device)
+
+    # Test model with several augmentations and severities
+    test_results = test_model(model, batch_size, data_dir, device, seed)
+
+    # Store results for later use
+    pickle.dump( test_results, open(result_name, "wb"))
     #######################
     # END OF YOUR CODE    #
     #######################
@@ -224,11 +338,11 @@ if __name__ == '__main__':
     """
     # Command line arguments
     parser = argparse.ArgumentParser()
-    
+
     # Model hyperparameters
     parser.add_argument('--model_name', default='debug', type=str,
                         help='Name of the model to train.')
-    
+
     # Optimizer hyperparameters
     parser.add_argument('--lr', default=0.01, type=float,
                         help='Learning rate to use')

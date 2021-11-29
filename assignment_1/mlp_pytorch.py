@@ -14,24 +14,25 @@
 # Date Created: 2021-11-01
 ################################################################################
 """
-This module implements a multi-layer perceptron (MLP) in NumPy.
+This module implements a multi-layer perceptron (MLP) in PyTorch.
 You should fill in code into indicated sections.
 """
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from modules import *
+import torch.nn as nn
+from collections import OrderedDict
 
 
-class MLP(object):
+class MLP(nn.Module):
     """
-    This class implements a Multi-layer Perceptron in NumPy.
+    This class implements a Multi-layer Perceptron in PyTorch.
     It handles the different layers and parameters of the model.
-    Once initialized an MLP object can perform forward and backward.
+    Once initialized an MLP object can perform forward.
     """
 
-    def __init__(self, n_inputs, n_hidden, n_classes):
+    def __init__(self, n_inputs, n_hidden, n_classes, use_batch_norm=False):
         """
         Initializes MLP object.
 
@@ -44,15 +45,40 @@ class MLP(object):
           n_classes: number of classes of the classification problem.
                      This number is required in order to specify the
                      output dimensions of the MLP
+          use_batch_norm: If True, add a Batch-Normalization layer in between
+                          each Linear and ReLU layer.
 
         TODO:
-        Implement initialization of the network.
+        Implement module setup of the network.
+        The linear layer have to initialized according to the Kaiming initialization.
+        Add the Batch-Normalization _only_ is use_batch_norm is True.
+
+        Hint: No softmax layer is needed here. Look at the CrossEntropyLoss module for loss calculation.
         """
 
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-        pass
+        super().__init__()
+
+        l_dims = [n_inputs] + n_hidden
+        layers = []
+        for i in range(len(l_dims) - 1):
+            linear = nn.Linear(l_dims[i], l_dims[i + 1])
+            nn.init.kaiming_normal_(linear.weight, mode='fan_in')
+
+            if use_batch_norm:
+                layers += [linear, nn.BatchNorm1d(l_dims[i + 1]), nn.ReLU()]
+            else: layers += [linear, nn.ReLU()]
+
+        # Also add final layer
+        linear = nn.Linear(l_dims[-1], n_classes)
+        nn.init.kaiming_normal_(linear.weight, mode='fan_in')
+        layers += [linear, nn.Softmax(dim=1)]
+
+        # Combine layers
+        self.layers = nn.Sequential(*layers)
+
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -74,45 +100,17 @@ class MLP(object):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-
+        x = x.view(x.size(0), -1)
+        out = self.layers(x)
         #######################
         # END OF YOUR CODE    #
         #######################
 
         return out
 
-    def backward(self, dout):
+    @property
+    def device(self):
         """
-        Performs backward pass given the gradients of the loss.
-
-        Args:
-          dout: gradients of the loss
-
-        TODO:
-        Implement backward pass of the network.
+        Returns the device on which the model is. Can be useful in some situations.
         """
-
-        #######################
-        # PUT YOUR CODE HERE  #
-        #######################
-        pass
-        #######################
-        # END OF YOUR CODE    #
-        #######################
-
-    def clear_cache(self):
-        """
-        Remove any saved tensors for the backward pass from any module.
-        Used to clean-up model from any remaining input data when we want to save it.
-
-        TODO:
-        Iterate over modules and call the 'clear_cache' function.
-        """
-        
-        #######################
-        # PUT YOUR CODE HERE  #
-        #######################
-        pass
-        #######################
-        # END OF YOUR CODE    #
-        #######################
+        return next(self.parameters()).device

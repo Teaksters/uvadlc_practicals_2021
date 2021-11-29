@@ -35,7 +35,7 @@ class LinearModule(object):
           input_layer: boolean, True if this is the first layer after the input, else False.
 
         TODO:
-        Initialize weight parameters using Kaiming initialization. 
+        Initialize weight parameters using Kaiming initialization.
         Initialize biases with zeros.
         Hint: the input_layer argument might be needed for the initialization
 
@@ -45,7 +45,21 @@ class LinearModule(object):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
+        self.params = dict()
+        if input_layer:
+            self.params['weight'] = np.random.normal(0,
+                                                 1/np.sqrt(in_features),
+                                                 (out_features, in_features))
+        else:
+            self.params['weight'] = np.random.normal(0, 1,
+                                                 (out_features, in_features))
+            self.params['weight'] *= np.sqrt(2 / in_features )
+        self.params['bias'] = np.zeros([1, out_features])
 
+        self.grads = dict()
+        self.grads['weight'] = np.zeros(self.params['weight'].shape)
+        self.grads['bias'] = np.zeros(self.params['bias'].shape)
+        self.grads['x'] = None
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -68,7 +82,10 @@ class LinearModule(object):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
+        out = x @ self.params['weight'].T + self.params['bias']
 
+        # store intermediate values
+        self.grads['x'] = x
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -92,7 +109,9 @@ class LinearModule(object):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-
+        self.grads['weight'] = dout.T @ self.grads['x']
+        self.grads['bias'] = np.ones([1, dout.shape[0]]) @ dout
+        dx = dout @ self.params['weight']
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -109,7 +128,9 @@ class LinearModule(object):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-        pass
+        self.grads['x'] = None
+        self.grads['weight'] = None
+        self.grads['bias'] = None
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -131,14 +152,17 @@ class ReLUModule(object):
 
         TODO:
         Implement forward pass of the module.
-        
+
         Hint: You can store intermediate variables inside the object. They can be used in backward pass computation.
         """
-        
+
         #######################
         # PUT YOUR CODE HERE  #
         #######################
+        out = np.maximum(0, x)
 
+        self.h = np.ones(x.shape)
+        self.h[x < 0] = 0
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -160,7 +184,7 @@ class ReLUModule(object):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-
+        dx = dout * self.h
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -177,7 +201,7 @@ class ReLUModule(object):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-        pass
+        self.h = None
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -206,7 +230,10 @@ class SoftMaxModule(object):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-
+        x_trick = x - np.max(x, axis=1)[:, None]
+        normalizer = np.sum(np.exp(x_trick), axis=1)[:, None]
+        out = np.exp(x_trick) / normalizer
+        self.out = out
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -228,7 +255,8 @@ class SoftMaxModule(object):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-
+        a = (dout * self.out) @ np.ones([dout.shape[-1], dout.shape[-1]])
+        dx = self.out * (dout - a)
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -246,7 +274,7 @@ class SoftMaxModule(object):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-        pass
+        self.out = None
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -273,7 +301,11 @@ class CrossEntropyModule(object):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
+        # Write as one-hot encoding
+        T = np.zeros(x.shape)
+        T[np.arange(x.shape[0]), y] = 1
 
+        out = np.mean(-np.sum(T * np.log(x), axis=1))
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -296,7 +328,10 @@ class CrossEntropyModule(object):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
+        T = np.zeros(x.shape)
+        T[np.arange(x.shape[0]), y] = 1
 
+        dx = -(1 / x.shape[0]) * (T / x)
         #######################
         # END OF YOUR CODE    #
         #######################

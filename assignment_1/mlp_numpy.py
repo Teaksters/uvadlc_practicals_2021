@@ -14,25 +14,24 @@
 # Date Created: 2021-11-01
 ################################################################################
 """
-This module implements a multi-layer perceptron (MLP) in PyTorch.
+This module implements a multi-layer perceptron (MLP) in NumPy.
 You should fill in code into indicated sections.
 """
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import torch.nn as nn
-from collections import OrderedDict
+from modules import *
 
 
-class MLP(nn.Module):
+class MLP(object):
     """
-    This class implements a Multi-layer Perceptron in PyTorch.
+    This class implements a Multi-layer Perceptron in NumPy.
     It handles the different layers and parameters of the model.
-    Once initialized an MLP object can perform forward.
+    Once initialized an MLP object can perform forward and backward.
     """
 
-    def __init__(self, n_inputs, n_hidden, n_classes, use_batch_norm=False):
+    def __init__(self, n_inputs, n_hidden, n_classes):
         """
         Initializes MLP object.
 
@@ -45,21 +44,22 @@ class MLP(nn.Module):
           n_classes: number of classes of the classification problem.
                      This number is required in order to specify the
                      output dimensions of the MLP
-          use_batch_norm: If True, add a Batch-Normalization layer in between
-                          each Linear and ReLU layer.
 
         TODO:
-        Implement module setup of the network.
-        The linear layer have to initialized according to the Kaiming initialization.
-        Add the Batch-Normalization _only_ is use_batch_norm is True.
-        
-        Hint: No softmax layer is needed here. Look at the CrossEntropyLoss module for loss calculation.
+        Implement initialization of the network.
         """
 
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-        pass
+        # Initialize network
+        self.layers = [LinearModule(n_inputs, n_hidden[0], input_layer=True),
+                       ReLUModule()]
+        for i in range(len(n_hidden) - 1):
+            self.layers.append(LinearModule(n_hidden[i], n_hidden[i + 1]))
+            self.layers.append(ReLUModule())
+        self.layers.append(LinearModule(n_hidden[-1], n_classes))
+        self.layers.append(SoftMaxModule())
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -81,17 +81,49 @@ class MLP(nn.Module):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-
+        for layer in self.layers:
+            x = layer.forward(x)
+        out = x
         #######################
         # END OF YOUR CODE    #
         #######################
 
         return out
 
-    @property
-    def device(self):
+    def backward(self, dout):
         """
-        Returns the device on which the model is. Can be useful in some situations.
+        Performs backward pass given the gradients of the loss.
+
+        Args:
+          dout: gradients of the loss
+
+        TODO:
+        Implement backward pass of the network.
         """
-        return next(self.parameters()).device
-    
+
+        #######################
+        # PUT YOUR CODE HERE  #
+        #######################
+        for layer in self.layers[::-1]:
+            dout = layer.backward(dout)
+        #######################
+        # END OF YOUR CODE    #
+        #######################
+
+    def clear_cache(self):
+        """
+        Remove any saved tensors for the backward pass from any module.
+        Used to clean-up model from any remaining input data when we want to save it.
+
+        TODO:
+        Iterate over modules and call the 'clear_cache' function.
+        """
+
+        #######################
+        # PUT YOUR CODE HERE  #
+        #######################
+        for layer in self.layers:
+            layer.clear_cache()
+        #######################
+        # END OF YOUR CODE    #
+        #######################
