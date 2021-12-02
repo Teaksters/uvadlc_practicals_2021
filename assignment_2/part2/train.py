@@ -44,17 +44,17 @@ def set_seed(seed):
 def train(args):
     """
     Trains an LSTM model on a text dataset
-    
+
     Args:
-        args: Namespace object of the command line arguments as 
+        args: Namespace object of the command line arguments as
               specified in the main function.
-        
+
     TODO:
     Create the dataset.
     Create the model and optimizer (we recommend Adam as optimizer).
-    Define the operations for the training loop here. 
-    Call the model forward function on the inputs, 
-    calculate the loss with the targets and back-propagate, 
+    Define the operations for the training loop here.
+    Call the model forward function on the inputs,
+    calculate the loss with the targets and back-propagate,
     Also make use of gradient clipping before the gradient step.
     Recommendation: you might want to try out Tensorboard for logging your experiments.
     """
@@ -66,15 +66,41 @@ def train(args):
     # The data loader returns pairs of tensors (input, targets) where inputs are the
     # input characters, and targets the labels, i.e. the text shifted by one.
     dataset = TextDataset(args.txt_file, args.input_seq_length)
-    data_loader = DataLoader(dataset, args.batch_size, 
+    args.vocabulary_size = dataset._vocabulary_size
+
+    data_loader = DataLoader(dataset, args.batch_size,
                              shuffle=True, drop_last=True, pin_memory=True,
                              collate_fn=text_collate_fn)
+
     # Create model
-    model = ...
+    model = TextGenerationModel(args)
+    model.to(args.device)
     # Create optimizer
-    optimizer = ...
+    loss_module = nn.CrossEntropyLoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
     # Training loop
-    pass
+    for epoch in range(args.num_epochs):
+        print('epoch: ', epoch, '/', args.num_epochs)
+        for x, labels in data_loader:
+            x.to(args.device), labels.to(args.device)
+            optimizer.zero_grad()
+
+            # Make predictions
+            preds = model(x)
+            preds = model.Softmax(preds)
+
+            # Calculate losses
+            labels = nn.functional.one_hot(labels,
+                    num_classes=args.vocabulary_size).type(torch.FloatTensor)
+            loss = loss_module(preds, labels)
+
+            # backpropogation
+            loss.backward()
+            optimizer.step()
+            print(loss)
+
+
+
     #######################
     # END OF YOUR CODE    #
     #######################

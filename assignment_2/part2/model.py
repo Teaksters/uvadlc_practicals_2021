@@ -40,7 +40,20 @@ class LSTM(nn.Module):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-        pass
+        # Define parameters
+        self.Wgx = nn.Parameter(torch.FloatTensor(self.embed_dim, self.hidden_dim))
+        self.Wgh = nn.Parameter(torch.FloatTensor(self.hidden_dim, self.hidden_dim))
+        self.Wix = nn.Parameter(torch.FloatTensor(self.embed_dim, self.hidden_dim))
+        self.Wih = nn.Parameter(torch.FloatTensor(self.hidden_dim, self.hidden_dim))
+        self.Wfx = nn.Parameter(torch.FloatTensor(self.embed_dim, self.hidden_dim))
+        self.Wfh = nn.Parameter(torch.FloatTensor(self.hidden_dim, self.hidden_dim))
+        self.Wox = nn.Parameter(torch.FloatTensor(self.embed_dim, self.hidden_dim))
+        self.Woh = nn.Parameter(torch.FloatTensor(self.hidden_dim, self.hidden_dim))
+
+        self.bg = nn.Parameter(torch.zeros((1, self.hidden_dim)))
+        self.bi = nn.Parameter(torch.zeros((1, self.hidden_dim)))
+        self.bf = nn.Parameter(torch.ones((1, self.hidden_dim)))
+        self.bo = nn.Parameter(torch.zeros((1, self.hidden_dim)))
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -62,7 +75,11 @@ class LSTM(nn.Module):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-        pass
+        r = 1 / math.sqrt(self.hidden_dim)
+        for param in self.parameters():
+            if param.shape[0] != 1:
+                with torch.no_grad():
+                    param.uniform_(-r, r)
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -85,7 +102,21 @@ class LSTM(nn.Module):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-        pass
+        # Probably need to loop over a dimension of the embeds
+        output = torch.FloatTensor(embeds.shape[0], embeds.shape[1], self.hidden_dim)
+        self.h = torch.zeros([1, self.hidden_dim])
+        self.c = torch.ones([embeds.shape[1], self.hidden_dim])
+        for idx, x in enumerate(embeds):
+            g = torch.tanh(x @ self.Wgx + self.h @ self.Wgh + self.bg)
+            i = torch.sigmoid(x @ self.Wix + self.h @ self.Wih + self.bi)
+            f = torch.sigmoid(x @ self.Wfx + self.h @ self.Wfh + self.bf)
+            o = torch.sigmoid(x @ self.Wox + self.h @ self.Woh + self.bo)
+            self.c = g * i + self.c * f
+            # Update stored hidden parameters
+            self.h = torch.tanh(self.c) * o
+            output[idx] = self.h
+
+        return output
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -114,7 +145,18 @@ class TextGenerationModel(nn.Module):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-        pass
+        self.vocabulary_size = args.vocabulary_size
+        self.embedding_size = args.embedding_size
+        self.lstm_hidden_dim = args.lstm_hidden_dim
+        self.LSTM = LSTM(self.lstm_hidden_dim, self.embedding_size)
+
+        # Initialize linear layer
+        self.outL = nn.Linear(self.lstm_hidden_dim, self.vocabulary_size)
+        self.Softmax = nn.Softmax(dim=2)
+
+        # Embedding Weights
+        r = 1 / math.sqrt(self.vocabulary_size)
+        self.Emb = nn.Embedding(self.vocabulary_size, self.embedding_size)
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -134,7 +176,15 @@ class TextGenerationModel(nn.Module):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-        pass
+        # Embed character in learned embedding
+        x = self.Emb(x)
+
+        # Apply LSTM cell
+        y_hidden = self.LSTM(x)
+
+        # Use LSTM output to generate characters
+        y = self.outL(y_hidden)
+        return y
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -156,7 +206,37 @@ class TextGenerationModel(nn.Module):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-        pass
+        # Initialize output structure
+        output = torch.empty([sample_length, batch_size, 1], dtype=torch.int64)
+
+        # Define a random start
+        random_start = torch.randint(0, self.vocabulary_size, [batch_size, 1])
+        output[0] = random_start
+        pred = None # For variable life-span
+
+        for idx, x in enumerate(output):
+            # Generate random output with infinite temperature
+            if temperature == float('inf'):
+                pred = torch.randint(0, self.vocabulary_size, [batch_size, 1])
+
+            # Generate model output based on provided temperature
+            else:
+                h = self.forward(x)
+                # Temperature of 0 results to determinstic behavior
+                if temperature == 0.:
+                    pred = h.argmax(dim=2)
+
+                # Sample from output with insecurity influenced by temperature
+                else:
+                    pred = self.Softmax(h / temperature)
+                    pred.squeeze_()
+                    pred = torch.multinomial(pred, 1)
+
+            # Update next character input with model prediction
+            if idx < sample_length - 1:
+                output[idx + 1] = pred
+
+        return output
         #######################
         # END OF YOUR CODE    #
         #######################
