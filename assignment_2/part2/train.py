@@ -27,6 +27,9 @@ from torch.utils.data import DataLoader
 from dataset import TextDataset, text_collate_fn
 from model import TextGenerationModel
 
+from torch.utils.tensorboard import SummaryWriter
+import os
+writer = SummaryWriter()
 
 def set_seed(seed):
     """
@@ -79,9 +82,20 @@ def train(args):
     loss_module = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
     # Training loop
+    counter = 0
     for epoch in range(args.num_epochs):
+
+        # Store model during checkpoints
+        if epoch in args.checkpoints:
+            model_path = 'chckpts'
+            os.makedirs(model_path, exist_ok=True)
+            torch.save(model, os.path.join(model_path, 'ep_' + str(epoch)))
+
+        # Train loop
         print('epoch: ', epoch, '/', args.num_epochs)
-        for x, labels in data_loader:
+        true_preds, count = 0., 0
+        t = tqdm(data_loader, leave=False)
+        for x, labels in t:
             x.to(args.device), labels.to(args.device)
             optimizer.zero_grad()
 
@@ -90,14 +104,25 @@ def train(args):
             preds = model.Softmax(preds)
 
             # Calculate losses
+            loss = torch.zeros(1)
             labels = nn.functional.one_hot(labels,
                     num_classes=args.vocabulary_size).type(torch.FloatTensor)
-            loss = loss_module(preds, labels)
+            for t, preds_t in enumerate(preds):
+                loss += loss_module(preds_t, labels[t])
+            loss /= preds.shape[0]
 
             # backpropogation
             loss.backward()
             optimizer.step()
-            print(loss)
+
+            # Record statistics during training
+            writer.add_scalar("Train/loss", loss.item(), counter)
+            counter += 1
+            true_preds += (preds.argmax(dim=-1) == labels.argmax(dim=-1)).sum().item()
+            count += labels.shape[0]
+        train_acc = true_preds / count
+        print('accuracy: ', train_acc)
+        writer.add_scalar("Train/accuracy", train_acc, epoch)
 
 
 
@@ -123,7 +148,11 @@ if __name__ == "__main__":
 
     # Additional arguments. Feel free to add more arguments
     parser.add_argument('--seed', type=int, default=0, help='Seed for pseudo-random number generator')
+    parser.add_argument('--checkpoints', type=list, default=[1, 5, 20], help='checkpoints for model storage')
 
     args = parser.parse_args()
     args.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")  # Use GPU if available, else use CPU
+
     train(args)
+
+    writer.flush()

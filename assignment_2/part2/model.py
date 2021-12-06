@@ -207,34 +207,36 @@ class TextGenerationModel(nn.Module):
         # PUT YOUR CODE HERE  #
         #######################
         # Initialize output structure
-        output = torch.empty([sample_length, batch_size, 1], dtype=torch.int64)
+        with torch.no_grads():
+            output = torch.empty([sample_length, batch_size, 1],
+                                 dtype=torch.int64)
 
-        # Define a random start
-        random_start = torch.randint(0, self.vocabulary_size, [batch_size, 1])
-        output[0] = random_start
-        pred = None # For variable life-span
+            # Define a random start
+            random_start = torch.randint(0, self.vocabulary_size, [batch_size, 1])
+            output[0] = random_start
+            pred = None # For variable life-span
 
-        for idx, x in enumerate(output):
-            # Generate random output with infinite temperature
-            if temperature == float('inf'):
-                pred = torch.randint(0, self.vocabulary_size, [batch_size, 1])
+            for idx, x in enumerate(output):
+                # Generate random output with infinite temperature
+                if temperature == float('inf'):
+                    pred = torch.randint(0, self.vocabulary_size, [batch_size, 1])
 
-            # Generate model output based on provided temperature
-            else:
-                h = self.forward(x)
-                # Temperature of 0 results to determinstic behavior
-                if temperature == 0.:
-                    pred = h.argmax(dim=2)
-
-                # Sample from output with insecurity influenced by temperature
+                # Generate model output based on provided temperature
                 else:
-                    pred = self.Softmax(h / temperature)
-                    pred.squeeze_()
-                    pred = torch.multinomial(pred, 1)
+                    h = self.forward(x)
+                    # Temperature of 0 results to determinstic behavior
+                    if temperature == 0.:
+                        pred = h.argmax(dim=2)
 
-            # Update next character input with model prediction
-            if idx < sample_length - 1:
-                output[idx + 1] = pred
+                    # Sample from output with insecurity influenced by temperature
+                    else:
+                        pred = self.Softmax(h / temperature)
+                        pred.squeeze_()
+                        pred = torch.multinomial(pred, 1)
+
+                # Update next character input with model prediction
+                if idx < sample_length - 1:
+                    output[idx + 1] = pred
 
         return output
         #######################
