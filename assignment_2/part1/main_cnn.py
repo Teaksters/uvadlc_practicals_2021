@@ -247,8 +247,9 @@ def test_model(model, batch_size, data_dir, device, seed):
     test_results = {}
 
     # Augmentation settings
-    augmentations = [gaussian_noise_transform, gaussian_blur_transform,
+    augmentations = [None, gaussian_noise_transform, gaussian_blur_transform,
                      contrast_transform, jpeg_transform]
+    augmentations = [None]
     severity = np.arange(1, 6)
 
     # Loop over all types of augmentation and severities
@@ -303,7 +304,7 @@ def main(model_name, lr, batch_size, epochs, data_dir, seed):
     os.makedirs(CHECKPOINT_PATH, exist_ok=True)
     os.makedirs(RESULT_PATH, exist_ok=True)
     checkpoint_name = os.path.join(CHECKPOINT_PATH, model_name)
-    result_name = os.path.join(RESULT_PATH, model_name + '.pkl')
+    result_name = os.path.join(RESULT_PATH, model_name + '_clean.pkl')
 
     # Prepare devices and seeds
     device = torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
@@ -314,8 +315,8 @@ def main(model_name, lr, batch_size, epochs, data_dir, seed):
     model.to(device)
 
     # Train model on the CIFAR10 dataset
-    model = train_model(model, lr, batch_size, epochs, data_dir,
-                        checkpoint_name, device)
+    # model = train_model(model, lr, batch_size, epochs, data_dir,
+                        # checkpoint_name, device)
 
     # Test model with several augmentations and severities
     test_results = test_model(model, batch_size, data_dir, device, seed)
