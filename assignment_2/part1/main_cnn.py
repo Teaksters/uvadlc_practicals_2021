@@ -249,14 +249,17 @@ def test_model(model, batch_size, data_dir, device, seed):
     # Augmentation settings
     augmentations = [None, gaussian_noise_transform, gaussian_blur_transform,
                      contrast_transform, jpeg_transform]
-    augmentations = [None]
     severity = np.arange(1, 6)
 
     # Loop over all types of augmentation and severities
     for augmentation in augmentations:
+        print(augmentation)
         for sev in severity:
             # Prepare data loaders
-            test = get_test_set(data_dir,
+            if augmentation == None:
+                test = get_test_set(data_dir)
+            else:
+                test = get_test_set(data_dir,
                                 augmentation=augmentation(severity=sev))
             test_loader = data.DataLoader(test, batch_size=batch_size,
                                           shuffle=False, drop_last=False)
@@ -265,9 +268,15 @@ def test_model(model, batch_size, data_dir, device, seed):
             test_acc = evaluate_model(model, test_loader, device)
 
             # Store results
-            aug = str(augmentation).split()[1]
+            if augmentation == None:
+                aug = 'None'
+            else:
+                aug = str(augmentation).split()[1]
             print('Tested: ', aug, sev)
             test_results[(aug, sev)] = test_acc
+
+            # If no augmentation applied no severities is applied
+            if augmentation == None: break
     #######################
     # END OF YOUR CODE    #
     #######################
@@ -304,20 +313,23 @@ def main(model_name, lr, batch_size, epochs, data_dir, seed):
     os.makedirs(CHECKPOINT_PATH, exist_ok=True)
     os.makedirs(RESULT_PATH, exist_ok=True)
     checkpoint_name = os.path.join(CHECKPOINT_PATH, model_name)
-    result_name = os.path.join(RESULT_PATH, model_name + '_clean.pkl')
+    result_name = os.path.join(RESULT_PATH, model_name + '.pkl')
 
     # Prepare devices and seeds
     device = torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
     set_seed(seed)
 
     # Initialize desired model
-    model = get_model(model_name)
-    model.to(device)
+    # model = get_model(model_name)
+    # model.to(device)
 
-    # Train model on the CIFAR10 dataset
+    # # Train model on the CIFAR10 dataset
     # model = train_model(model, lr, batch_size, epochs, data_dir,
-                        # checkpoint_name, device)
+    #                     checkpoint_name, device)
 
+    # If using with pretrained checkpoint
+    model = torch.load(os.path.join(CHECKPOINT_PATH, model_name))
+    model.to(device)
     # Test model with several augmentations and severities
     test_results = test_model(model, batch_size, data_dir, device, seed)
 
