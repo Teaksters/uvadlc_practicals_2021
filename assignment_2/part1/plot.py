@@ -45,18 +45,16 @@ for file in os.listdir(RES_DIR):
         RCE = []
         print(file, results)
         for i in range(1, 6):
-            ce = results[(transform, i)] / res_18_res[(transform, i)]
-            rce = (results[(transform, i)] - results[(None, 1)]) / \
-                        (res_18_res[(transform, i)] - res_18_res[(None, 1)])
-            if transform == None:
+            if transform != None:
+                ce = results[(transform, i)] / res_18_res[(transform, i)]
+                rce = (results[(transform, i)] - results[(None, 1)]) / \
+                            (res_18_res[(transform, i)] - res_18_res[(None, 1)])
                 RCE.append(rce)
-                break # clean has only one severity
-            RCE.append(rce)
-            CE.append(ce)
-        print(RCE, transform)
-        if transform == None:
-            ax1.plot(SEVERETIES, RCE)
-            break # clean has only one severity
+                CE.append(ce)
+            else:
+                ce = results[(transform, i)] / res_18_res[(transform, i)]
+                CE.append(ce)
+
         ax.plot(SEVERETIES, CE, label=transform)
         ax1.plot(SEVERETIES, RCE)
     plt.title('CE and RCE Against Transformation Severity')

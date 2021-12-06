@@ -249,6 +249,7 @@ def test_model(model, batch_size, data_dir, device, seed):
     # Augmentation settings
     augmentations = [None, gaussian_noise_transform, gaussian_blur_transform,
                      contrast_transform, jpeg_transform]
+    augmentations = [None]
     severity = np.arange(1, 6)
 
     # Loop over all types of augmentation and severities
