@@ -80,7 +80,7 @@ def train(args):
     model = model.to(args.device)
     # Create optimizer
     loss_module = nn.CrossEntropyLoss().to(args.device)
-    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr).to(args.device)
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
     # Training loop
     counter = 0
     for epoch in range(args.num_epochs):
