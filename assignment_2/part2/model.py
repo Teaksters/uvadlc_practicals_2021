@@ -182,7 +182,7 @@ class TextGenerationModel(nn.Module):
         # PUT YOUR CODE HERE  #
         #######################
         # Embed character in learned embedding
-        print(x.device, self.Emb.device)
+        print(x.device)
         x = self.Emb(x)
 
         # Apply LSTM cell
