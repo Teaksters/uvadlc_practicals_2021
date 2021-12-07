@@ -159,7 +159,6 @@ class TextGenerationModel(nn.Module):
         self.Emb = nn.Embedding(self.vocabulary_size, self.embedding_size)
 
         # Push everything to device
-        print(args.device)
         self.Emb.to(args.device)
         self.outL.to(args.device)
         self.LSTM.to(args.device)
@@ -183,6 +182,7 @@ class TextGenerationModel(nn.Module):
         # PUT YOUR CODE HERE  #
         #######################
         # Embed character in learned embedding
+        print(x.device, self.Emb.device)
         x = self.Emb(x)
 
         # Apply LSTM cell
