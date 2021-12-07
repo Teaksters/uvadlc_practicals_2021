@@ -157,6 +157,11 @@ class TextGenerationModel(nn.Module):
         # Embedding Weights
         r = 1 / math.sqrt(self.vocabulary_size)
         self.Emb = nn.Embedding(self.vocabulary_size, self.embedding_size)
+
+        # Push everything to device
+        self.Emb.to(args.device)
+        self.outL.to(args.device)
+        self.LSTM.to(args.device)
         #######################
         # END OF YOUR CODE    #
         #######################
