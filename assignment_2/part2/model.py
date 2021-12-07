@@ -54,6 +54,11 @@ class LSTM(nn.Module):
         self.bi = nn.Parameter(torch.zeros((1, self.hidden_dim)))
         self.bf = nn.Parameter(torch.ones((1, self.hidden_dim)))
         self.bo = nn.Parameter(torch.zeros((1, self.hidden_dim)))
+
+        self.h = torch.zeros([1, self.hidden_dim])
+        self.c = torch.ones([embeds.shape[1], self.hidden_dim])
+        self.register_buffer('h', self.h)
+        self.register_buffer('c', self.c)
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -107,7 +112,6 @@ class LSTM(nn.Module):
         self.h = torch.zeros([1, self.hidden_dim])
         self.c = torch.ones([embeds.shape[1], self.hidden_dim])
         for idx, x in enumerate(embeds):
-            print(x.device, self.Wgx.device, self.Wgh.device, self.h.device, self.bg.device)
             g = torch.tanh(x @ self.Wgx + self.h @ self.Wgh + self.bg)
             i = torch.sigmoid(x @ self.Wix + self.h @ self.Wih + self.bi)
             f = torch.sigmoid(x @ self.Wfx + self.h @ self.Wfh + self.bf)
