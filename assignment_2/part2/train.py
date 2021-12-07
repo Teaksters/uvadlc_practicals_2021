@@ -122,7 +122,7 @@ def train(args):
         if epoch + 1 in args.checkpoints:
             model_path = 'chkpts'
             os.makedirs(model_path, exist_ok=True)
-            torch.save(model, os.path.join(model_path, args.txt_file[7:-4],'ep_' + str(epoch)))
+            torch.save(model, os.path.join(model_path, args.txt_file[7:-4] + 'ep_' + str(epoch)))
 
 
 
