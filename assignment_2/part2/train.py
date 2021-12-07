@@ -79,8 +79,8 @@ def train(args):
     model = TextGenerationModel(args)
     model = model.to(args.device)
     # Create optimizer
-    loss_module = nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
+    loss_module = nn.CrossEntropyLoss().to(args.device)
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr).to(args.device)
     # Training loop
     counter = 0
     for epoch in range(args.num_epochs):
