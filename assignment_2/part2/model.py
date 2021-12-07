@@ -54,11 +54,6 @@ class LSTM(nn.Module):
         self.bi = nn.Parameter(torch.zeros((1, self.hidden_dim)))
         self.bf = nn.Parameter(torch.ones((1, self.hidden_dim)))
         self.bo = nn.Parameter(torch.zeros((1, self.hidden_dim)))
-
-        self.h = torch.zeros([1, self.hidden_dim])
-        self.c = torch.ones([args.embedding_size[1], self.hidden_dim])
-        self.register_buffer('h', self.h)
-        self.register_buffer('c', self.c)
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -109,8 +104,8 @@ class LSTM(nn.Module):
         #######################
         # Probably need to loop over a dimension of the embeds
         output = torch.FloatTensor(embeds.shape[0], embeds.shape[1], self.hidden_dim)
-        self.h = torch.zeros([1, self.hidden_dim])
-        self.c = torch.ones([embeds.shape[1], self.hidden_dim])
+        self.h = torch.zeros([1, self.hidden_dim]).to(embeds.device)
+        self.c = torch.ones([embeds.shape[1], self.hidden_dim]).to(embeds.device)
         for idx, x in enumerate(embeds):
             g = torch.tanh(x @ self.Wgx + self.h @ self.Wgh + self.bg)
             i = torch.sigmoid(x @ self.Wix + self.h @ self.Wih + self.bi)
