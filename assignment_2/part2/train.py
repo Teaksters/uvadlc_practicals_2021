@@ -77,7 +77,6 @@ def train(args):
 
     # Create model
     model = TextGenerationModel(args)
-    print(args.device)
     model.to(args.device)
     # Create optimizer
     loss_module = nn.CrossEntropyLoss()
@@ -101,6 +100,7 @@ def train(args):
             optimizer.zero_grad()
 
             # Make predictions
+            print(x.device, args.device)
             preds = model(x)
             preds = model.Softmax(preds)
 
