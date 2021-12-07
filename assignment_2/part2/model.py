@@ -210,7 +210,7 @@ class TextGenerationModel(nn.Module):
         # PUT YOUR CODE HERE  #
         #######################
         # Initialize output structure
-        with torch.no_grads():
+        with torch.no_grad():
             output = torch.empty([sample_length, batch_size, 1],
                                  dtype=torch.int64)
 

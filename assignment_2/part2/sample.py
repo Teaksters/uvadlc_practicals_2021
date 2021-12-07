@@ -10,37 +10,45 @@ from torch.utils.data import DataLoader
 
 from dataset import TextDataset, text_collate_fn
 from model import TextGenerationModel
+import os
+
+
+TEMPS = [0.5, 1.0, 2.0]
+SAMPLE_SIZES = [30, 60, 90]
+SAMPLE_BATCHES = 5
 
 
 def main(args):
     dataset = TextDataset(args.txt_file, args.input_seq_length)
-    args.vocabulary_size = dataset._vocabulary_size
+    os.makedirs(args.RES_DIR, exist_ok=True)
+    out_f = os.path.join(args.RES_DIR, 'generated.txt')
+    with open(out_f, 'w') as f:
+        # Test model for setup hyperparameters
+        for checkpoint in os.listdir(args.CHKPT_DIR):
+            path = os.path.join(args.CHKPT_DIR, checkpoint)
+            model = torch.load(path)
+            f.write('############Checkpoint: ' + str(checkpoint) + '############\n')
+            for T in TEMPS:
+                f.write('############Temp: ' + str(T) + '############\n')
+                for size in SAMPLE_SIZES:
+                    f.write('############Len: ' + str(size) + '############\n')
+                    # Create samples
+                    for i in range(SAMPLE_BATCHES):
+                        output = model.sample(sample_length=size,
+                                        temperature=T).squeeze().detach().numpy().T
+                        output = np.vectorize(dataset._ix_to_char.get)(output)
+                        for out in output:
+                            sentence = ''.join(out)
+                            f.write(sentence + '\n')
 
-    data_loader = DataLoader(dataset, args.batch_size,
-                             shuffle=True, drop_last=True, pin_memory=True,
-                             collate_fn=text_collate_fn)
-
-    # Create model
-    model = TextGenerationModel(args)
-    model.to(args.device)
-    model.eval()
-
-    # Sample randomly generated text
-    output = model.sample(temperature=2.0).squeeze().detach().numpy().T
-    output = np.vectorize(dataset._ix_to_char.get)(output)
 
 if __name__=='__main__':
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser()  # Parse training configuration
+
     # Model
     parser.add_argument('--txt_file', type=str, required=True, help="Path to a .txt file to train on")
     parser.add_argument('--input_seq_length', type=int, default=30, help='Length of an input sequence')
-    parser.add_argument('--lstm_hidden_dim', type=int, default=1024, help='Number of hidden units in the LSTM')
-    parser.add_argument('--embedding_size', type=int, default=256, help='Dimensionality of the embeddings.')
-
-    parser.add_argument('--batch_size', type=int, default=128, help='Batch size to train with.')
-
-    parser.add_argument('--seed', type=int, default=0, help='Seed for pseudo-random number generator')
-
     args = parser.parse_args()
-    args.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")  # Use GPU if available, else use CPU
+    args.CHKPT_DIR = 'chkpts'
+    args.RES_DIR = 'rslts'
     main(args)
