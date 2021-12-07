@@ -103,7 +103,7 @@ class LSTM(nn.Module):
         # PUT YOUR CODE HERE  #
         #######################
         # Probably need to loop over a dimension of the embeds
-        output = torch.FloatTensor(embeds.shape[0], embeds.shape[1], self.hidden_dim)
+        output = torch.FloatTensor(embeds.shape[0], embeds.shape[1], self.hidden_dim).to(embeds.device)
         self.h = torch.zeros([1, self.hidden_dim]).to(embeds.device)
         self.c = torch.ones([embeds.shape[1], self.hidden_dim]).to(embeds.device)
         for idx, x in enumerate(embeds):
@@ -184,9 +184,7 @@ class TextGenerationModel(nn.Module):
         x = self.Emb(x)
 
         # Apply LSTM cell
-        print(x.device)
         y_hidden = self.LSTM(x)
-        
         # Use LSTM output to generate characters
         y = self.outL(y_hidden)
         return y
