@@ -100,7 +100,7 @@ def train(args):
             optimizer.zero_grad()
 
             # Make predictions
-            print(x.device, args.device)
+            print(x.device, labels.device, args.device)
             preds = model(x)
             preds = model.Softmax(preds)
 
