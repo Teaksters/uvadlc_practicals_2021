@@ -29,7 +29,7 @@ from model import TextGenerationModel
 
 from torch.utils.tensorboard import SummaryWriter
 import os
-writer = SummaryWriter()
+
 
 def set_seed(seed):
     """
@@ -85,12 +85,6 @@ def train(args):
     counter = 0
     for epoch in range(args.num_epochs):
 
-        # Store model during checkpoints
-        if epoch in args.checkpoints:
-            model_path = 'chckpts'
-            os.makedirs(model_path, exist_ok=True)
-            torch.save(model, os.path.join(model_path, 'ep_' + str(epoch)))
-
         # Train loop
         print('epoch: ', epoch, '/', args.num_epochs)
         true_preds, count = 0., 0
@@ -124,6 +118,12 @@ def train(args):
         print('accuracy: ', train_acc)
         writer.add_scalar("Train Accuracy", train_acc, epoch)
 
+        # Store model during checkpoints
+        if epoch + 1 in args.checkpoints:
+            model_path = 'chkpts'
+            os.makedirs(model_path, exist_ok=True)
+            torch.save(model, os.path.join(model_path, args.txt_file[7:-4],'ep_' + str(epoch)))
+
 
 
     #######################
@@ -152,6 +152,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     args.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")  # Use GPU if available, else use CPU
+    writer = SummaryWriter(os.path.join('runs', args.txt_file[7:-4]))
 
     train(args)
 
