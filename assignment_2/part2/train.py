@@ -104,9 +104,9 @@ def train(args):
             preds = model.Softmax(preds)
 
             # Calculate losses
-            loss = torch.zeros(1)
+            loss = torch.zeros(1).to(args.device)
             labels = nn.functional.one_hot(labels,
-                    num_classes=args.vocabulary_size).type(torch.FloatTensor)
+                    num_classes=args.vocabulary_size).type(torch.FloatTensor).to(args.device)
             for t, preds_t in enumerate(preds):
                 loss += loss_module(preds_t, labels[t])
             loss /= preds.shape[0]
