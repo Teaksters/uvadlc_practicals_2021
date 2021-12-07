@@ -96,7 +96,7 @@ def train(args):
         true_preds, count = 0., 0
         t = tqdm(data_loader, leave=False)
         for i, (x, labels) in enumerate(t):
-            x.to(args.device), labels.to(args.device)
+            x, labels = x.to(args.device), labels.to(args.device)
             optimizer.zero_grad()
 
             # Make predictions
