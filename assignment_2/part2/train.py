@@ -77,6 +77,7 @@ def train(args):
 
     # Create model
     model = TextGenerationModel(args)
+    print(args.device)
     model.to(args.device)
     # Create optimizer
     loss_module = nn.CrossEntropyLoss()
