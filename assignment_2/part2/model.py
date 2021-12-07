@@ -187,7 +187,7 @@ class TextGenerationModel(nn.Module):
         y_hidden = self.LSTM(x)
 
         # Use LSTM output to generate characters
-        print(self.outL.device, y_hidden.device)
+        print(self.outL, y_hidden.device)
         y = self.outL(y_hidden)
         return y
         #######################
