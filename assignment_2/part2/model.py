@@ -41,19 +41,19 @@ class LSTM(nn.Module):
         # PUT YOUR CODE HERE  #
         #######################
         # Define parameters
-        self.Wgx = nn.Parameter(torch.FloatTensor(self.embed_dim, self.hidden_dim))
-        self.Wgh = nn.Parameter(torch.FloatTensor(self.hidden_dim, self.hidden_dim))
-        self.Wix = nn.Parameter(torch.FloatTensor(self.embed_dim, self.hidden_dim))
-        self.Wih = nn.Parameter(torch.FloatTensor(self.hidden_dim, self.hidden_dim))
-        self.Wfx = nn.Parameter(torch.FloatTensor(self.embed_dim, self.hidden_dim))
-        self.Wfh = nn.Parameter(torch.FloatTensor(self.hidden_dim, self.hidden_dim))
-        self.Wox = nn.Parameter(torch.FloatTensor(self.embed_dim, self.hidden_dim))
-        self.Woh = nn.Parameter(torch.FloatTensor(self.hidden_dim, self.hidden_dim))
+        self.Wgx = nn.Parameter(torch.FloatTensor(self.embed_dim, self.hidden_dim)).to(args.device)
+        self.Wgh = nn.Parameter(torch.FloatTensor(self.hidden_dim, self.hidden_dim)).to(args.device)
+        self.Wix = nn.Parameter(torch.FloatTensor(self.embed_dim, self.hidden_dim)).to(args.device)
+        self.Wih = nn.Parameter(torch.FloatTensor(self.hidden_dim, self.hidden_dim)).to(args.device)
+        self.Wfx = nn.Parameter(torch.FloatTensor(self.embed_dim, self.hidden_dim)).to(args.device)
+        self.Wfh = nn.Parameter(torch.FloatTensor(self.hidden_dim, self.hidden_dim)).to(args.device)
+        self.Wox = nn.Parameter(torch.FloatTensor(self.embed_dim, self.hidden_dim)).to(args.device)
+        self.Woh = nn.Parameter(torch.FloatTensor(self.hidden_dim, self.hidden_dim)).to(args.device)
 
-        self.bg = nn.Parameter(torch.zeros((1, self.hidden_dim)))
-        self.bi = nn.Parameter(torch.zeros((1, self.hidden_dim)))
-        self.bf = nn.Parameter(torch.ones((1, self.hidden_dim)))
-        self.bo = nn.Parameter(torch.zeros((1, self.hidden_dim)))
+        self.bg = nn.Parameter(torch.zeros((1, self.hidden_dim))).to(args.device)
+        self.bi = nn.Parameter(torch.zeros((1, self.hidden_dim))).to(args.device)
+        self.bf = nn.Parameter(torch.ones((1, self.hidden_dim))).to(args.device)
+        self.bo = nn.Parameter(torch.zeros((1, self.hidden_dim))).to(args.device)
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -161,7 +161,6 @@ class TextGenerationModel(nn.Module):
         # Push everything to device
         self.Emb = self.Emb.to(args.device)
         self.outL = self.outL.to(args.device)
-        self.LSTM = self.LSTM.to(args.device)
         #######################
         # END OF YOUR CODE    #
         #######################
