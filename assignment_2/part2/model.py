@@ -56,7 +56,7 @@ class LSTM(nn.Module):
         self.bo = nn.Parameter(torch.zeros((1, self.hidden_dim)))
 
         self.h = torch.zeros([1, self.hidden_dim])
-        self.c = torch.ones([embeds.shape[1], self.hidden_dim])
+        self.c = torch.ones([args.embedding_size[1], self.hidden_dim])
         self.register_buffer('h', self.h)
         self.register_buffer('c', self.c)
         #######################
