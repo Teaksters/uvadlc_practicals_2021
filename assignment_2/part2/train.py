@@ -78,6 +78,7 @@ def train(args):
     # Create model
     model = TextGenerationModel(args)
     model.to(args.device)
+    print('m: ', model.device)
     # Create optimizer
     loss_module = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
@@ -100,7 +101,6 @@ def train(args):
             optimizer.zero_grad()
 
             # Make predictions
-            print(x.device, labels.device, args.device)
             preds = model(x)
             preds = model.Softmax(preds)
 
