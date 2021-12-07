@@ -95,7 +95,7 @@ def train(args):
         print('epoch: ', epoch, '/', args.num_epochs)
         true_preds, count = 0., 0
         t = tqdm(data_loader, leave=False)
-        for x, labels in t:
+        for i, (x, labels) in enumerate(t):
             x.to(args.device), labels.to(args.device)
             optimizer.zero_grad()
 
@@ -116,13 +116,13 @@ def train(args):
             optimizer.step()
 
             # Record statistics during training
-            writer.add_scalar("Train/loss", loss.item(), counter)
             counter += 1
+            writer.add_scalar("Train Loss", loss.item(), counter)
             true_preds += (preds.argmax(dim=-1) == labels.argmax(dim=-1)).sum().item()
             count += labels.shape[0]
         train_acc = true_preds / count
         print('accuracy: ', train_acc)
-        writer.add_scalar("Train/accuracy", train_acc, epoch)
+        writer.add_scalar("Train Accuracy", train_acc, epoch)
 
 
 

@@ -39,14 +39,21 @@ class MLP(nn.Module):
                     will simply perform a multinomial logistic regression.
           n_outputs: This number is required in order to specify the
                      output dimensions of the MLP
-        TODO: 
+        TODO:
         - define a simple MLP that operates on properly formatted QM9 data
         """
 
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-        pass
+        super().__init__()
+        layers = []
+        layer_sizes = [n_inputs] + n_hidden
+        for layer_index in range(1, len(layer_sizes)):
+            layers += [nn.Linear(layer_sizes[layer_index-1], layer_sizes[layer_index]),
+                       nn.LeakyReLU(inplace=True)]
+        layers += [nn.Linear(layer_sizes[-1], n_outputs)]
+        self.model = nn.Sequential(*layers)
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -55,7 +62,7 @@ class MLP(nn.Module):
         """
         Performs forward pass of the input. Here an input tensor x is transformed through
         several layer transformations.
-        
+
         Args:
             x: input to the network
         Returns:
@@ -65,7 +72,7 @@ class MLP(nn.Module):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-        pass
+        out = self.model(x)
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -99,8 +106,8 @@ class GNN(nn.Module):
             n_hidden: hidden features within the neural networks (embeddings, nodes after graph convolutions, etc.)
             n_output: how many output features
             num_convolution_blocks: how many blocks convolutions should be performed. A block may include multiple convolutions
-        
-        TODO: 
+
+        TODO:
         - define a GNN which has the following structure: node embedding -> [ReLU -> RGCNConv -> ReLU -> MFConv] x num_convs -> Add-Pool -> Linear -> ReLU -> Linear
         - One the data has been pooled, it may be beneficial to apply another MLP on the pooled data before predicing the output.
         """
@@ -138,7 +145,7 @@ class GNN(nn.Module):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-        
+
         #######################
         # END OF YOUR CODE    #
         #######################
