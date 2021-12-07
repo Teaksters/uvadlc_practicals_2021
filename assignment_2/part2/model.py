@@ -184,10 +184,10 @@ class TextGenerationModel(nn.Module):
         x = self.Emb(x)
 
         # Apply LSTM cell
+        print(x.device)
         y_hidden = self.LSTM(x)
-
+        
         # Use LSTM output to generate characters
-        print(self.outL, y_hidden.device)
         y = self.outL(y_hidden)
         return y
         #######################
