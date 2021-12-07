@@ -41,19 +41,19 @@ class LSTM(nn.Module):
         # PUT YOUR CODE HERE  #
         #######################
         # Define parameters
-        self.Wgx = nn.Parameter(torch.FloatTensor(self.embed_dim, self.hidden_dim)).to(args.device)
-        self.Wgh = nn.Parameter(torch.FloatTensor(self.hidden_dim, self.hidden_dim)).to(args.device)
-        self.Wix = nn.Parameter(torch.FloatTensor(self.embed_dim, self.hidden_dim)).to(args.device)
-        self.Wih = nn.Parameter(torch.FloatTensor(self.hidden_dim, self.hidden_dim)).to(args.device)
-        self.Wfx = nn.Parameter(torch.FloatTensor(self.embed_dim, self.hidden_dim)).to(args.device)
-        self.Wfh = nn.Parameter(torch.FloatTensor(self.hidden_dim, self.hidden_dim)).to(args.device)
-        self.Wox = nn.Parameter(torch.FloatTensor(self.embed_dim, self.hidden_dim)).to(args.device)
-        self.Woh = nn.Parameter(torch.FloatTensor(self.hidden_dim, self.hidden_dim)).to(args.device)
+        self.Wgx = nn.Parameter(torch.FloatTensor(self.embed_dim, self.hidden_dim))
+        self.Wgh = nn.Parameter(torch.FloatTensor(self.hidden_dim, self.hidden_dim))
+        self.Wix = nn.Parameter(torch.FloatTensor(self.embed_dim, self.hidden_dim))
+        self.Wih = nn.Parameter(torch.FloatTensor(self.hidden_dim, self.hidden_dim))
+        self.Wfx = nn.Parameter(torch.FloatTensor(self.embed_dim, self.hidden_dim))
+        self.Wfh = nn.Parameter(torch.FloatTensor(self.hidden_dim, self.hidden_dim))
+        self.Wox = nn.Parameter(torch.FloatTensor(self.embed_dim, self.hidden_dim))
+        self.Woh = nn.Parameter(torch.FloatTensor(self.hidden_dim, self.hidden_dim))
 
-        self.bg = nn.Parameter(torch.zeros((1, self.hidden_dim))).to(args.device)
-        self.bi = nn.Parameter(torch.zeros((1, self.hidden_dim))).to(args.device)
-        self.bf = nn.Parameter(torch.ones((1, self.hidden_dim))).to(args.device)
-        self.bo = nn.Parameter(torch.zeros((1, self.hidden_dim))).to(args.device)
+        self.bg = nn.Parameter(torch.zeros((1, self.hidden_dim)))
+        self.bi = nn.Parameter(torch.zeros((1, self.hidden_dim)))
+        self.bf = nn.Parameter(torch.ones((1, self.hidden_dim)))
+        self.bo = nn.Parameter(torch.zeros((1, self.hidden_dim)))
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -107,6 +107,7 @@ class LSTM(nn.Module):
         self.h = torch.zeros([1, self.hidden_dim])
         self.c = torch.ones([embeds.shape[1], self.hidden_dim])
         for idx, x in enumerate(embeds):
+            print(x.device, self.Wgx.device, self.Wgh.device, self.h.device, self.bg.device)
             g = torch.tanh(x @ self.Wgx + self.h @ self.Wgh + self.bg)
             i = torch.sigmoid(x @ self.Wix + self.h @ self.Wih + self.bi)
             f = torch.sigmoid(x @ self.Wfx + self.h @ self.Wfh + self.bf)
