@@ -107,13 +107,14 @@ def train(args):
 
             # backpropogation
             loss.backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), args.clip)
             optimizer.step()
 
             # Record statistics during training
             counter += 1
             writer.add_scalar("Train Loss", loss.item(), counter)
             true_preds += (preds.argmax(dim=-1) == labels.argmax(dim=-1)).sum().item()
-            count += labels.shape[0] * labels.shape[1] 
+            count += labels.shape[0] * labels.shape[1]
         train_acc = true_preds / count
         print('accuracy: ', train_acc)
         writer.add_scalar("Train Accuracy", train_acc, epoch)
