@@ -107,7 +107,7 @@ def train(args):
 
             # backpropogation
             loss.backward()
-            torch.nn.utils.clip_grad_norm_(model.parameters(), args.clip)
+            torch.nn.utils.clip_grad_norm_(model.parameters(), args.clip_grad_norm)
             optimizer.step()
 
             # Record statistics during training
