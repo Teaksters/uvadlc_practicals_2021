@@ -13,7 +13,7 @@ from model import TextGenerationModel
 import os
 
 
-TEMPS = [0.5, 1.0, 2.0]
+TEMPS = [0.5, 1.0, 2.0, 10.0]
 SAMPLE_SIZES = [30, 60, 90]
 SAMPLE_BATCHES = 5
 
