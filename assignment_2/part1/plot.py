@@ -14,20 +14,20 @@ res18_path = os.path.join(RES_DIR, 'resnet18.pkl')
 res_18_res = pickle.load(open(res18_path, "rb" ))
 
 # Report resnet18 Accuracy in relation to transformations and severity
-# for transform in TRANSFORMS:
-#     if transform == None: continue
-#     acc = []
-#     for i in range(1, 6):
-#         acc.append(res_18_res[(transform, i)])
-#     plt.plot(SEVERETIES, acc, label=transform)
+for transform in TRANSFORMS:
+    if transform == None: continue
+    acc = []
+    for i in range(1, 6):
+        acc.append(res_18_res[(transform, i)])
+    plt.plot(SEVERETIES, acc, label=transform)
 #
-# plt.xticks(SEVERETIES)
-# plt.title('Resnet-18 Accuracy Against Transformation Severity')
-# plt.xlabel('Transformation Severity (little->high)')
-# plt.ylabel('Accuracy')
-# plt.tight_layout()
-# plt.legend()
-# plt.savefig('Resnet_18_acc.jpg')
+plt.xticks(SEVERETIES)
+plt.title('Resnet-18 Accuracy Against Transformation Severity')
+plt.xlabel('Transformation Severity (little->high)')
+plt.ylabel('Accuracy')
+plt.tight_layout()
+plt.legend()
+plt.savefig('Resnet_18_acc.jpg')
 
 # Now for the CE RCE results
 for file in os.listdir(RES_DIR):
@@ -40,25 +40,17 @@ for file in os.listdir(RES_DIR):
     fig, [ax, ax1] = plt.subplots(2, 1)
     plt.setp([ax, ax1], xticks=SEVERETIES)
     for transform in TRANSFORMS:
-        CE = []
-        RCE = []
+        ce, ce_ = 0., 0.
+        rce, rce_ = 0., 0.
         for i in range(1, 6):
-            if transform != None:
-                ce = results[(transform, i)] / res_18_res[(transform, i)]
-                rce = (results[(transform, i)] - results[('None', 1)]) / \
-                            (res_18_res[(transform, i)] - res_18_res[('None', 1)])
-                RCE.append(rce)
-                CE.append(ce)
-            else:
-                ce = results[(transform, i)] / res_18_res[(transform, i)]
-                CE.append(ce)
-
-        ax.plot(SEVERETIES, CE, label=transform)
-        ax1.plot(SEVERETIES, RCE)
-    ax.set_title('CE and RCE Against Transformation Severity ' + file[:-4])
-    ax1.set_xlabel('Transformation Severity (little->high)')
-    ax.set(ylabel='CE Measure')
-    ax1.set(ylabel='RCE Measure')
-    ax.legend()
-    plt.tight_layout()
-    plt.savefig(os.path.join('pics/' + file[:-4] + 'RCE_CE.jpg'))
+            a = (1 - results[(transform, i)])
+            _a = (1 - results[('None', 1)])
+            b = (1 - res_18_res[(transform, i)])
+            _b = (1 - res_18_res[('None', 1)])
+            ce +=  a
+            ce_ += b
+            rce += (a - _a)
+            rce_ += (b - _b)
+        CE = ce / ce_
+        RCE = rce / rce_
+        print(file[:-4], transform, ' CE: ', str(CE), ' RCE: ', str(RCE))

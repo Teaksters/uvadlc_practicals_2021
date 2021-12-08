@@ -253,7 +253,6 @@ def test_model(model, batch_size, data_dir, device, seed):
 
     # Loop over all types of augmentation and severities
     for augmentation in augmentations:
-        print(augmentation)
         for sev in severity:
             # Prepare data loaders
             if augmentation == None:
