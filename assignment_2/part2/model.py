@@ -161,6 +161,7 @@ class TextGenerationModel(nn.Module):
         # Push everything to device
         self.Emb = self.Emb.to(args.device)
         self.outL = self.outL.to(args.device)
+        self.args = args
         #######################
         # END OF YOUR CODE    #
         #######################
