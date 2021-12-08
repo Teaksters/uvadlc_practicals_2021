@@ -36,7 +36,7 @@ def main(args):
                     # Create samples
                     for i in range(SAMPLE_BATCHES):
                         output = model.sample(sample_length=size,
-                                        temperature=T).squeeze().detach().numpy().T
+                                        temperature=T).squeeze().detach().cpu().numpy().T
                         output = np.vectorize(dataset._ix_to_char.get)(output)
                         for out in output:
                             sentence = ''.join(out)
