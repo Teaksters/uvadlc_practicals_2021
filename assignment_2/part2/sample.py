@@ -27,6 +27,7 @@ def main(args):
         for checkpoint in os.listdir(args.CHKPT_DIR):
             path = os.path.join(args.CHKPT_DIR, checkpoint)
             model = torch.load(path)
+            model.to(args.device)
             f.write('############Checkpoint: ' + str(checkpoint) + '############\n')
             for T in TEMPS:
                 f.write('############Temp: ' + str(T) + '############\n')
@@ -51,4 +52,5 @@ if __name__=='__main__':
     args = parser.parse_args()
     args.CHKPT_DIR = 'chkpts'
     args.RES_DIR = 'rslts'
+    args.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     main(args)

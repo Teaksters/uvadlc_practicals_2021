@@ -212,7 +212,7 @@ class TextGenerationModel(nn.Module):
         # Initialize output structure
         with torch.no_grad():
             output = torch.empty([sample_length, batch_size, 1],
-                                 dtype=torch.int64)
+                                 dtype=torch.int64).to(self.args.device)
 
             # Define a random start
             random_start = torch.randint(0, self.vocabulary_size, [batch_size, 1])
