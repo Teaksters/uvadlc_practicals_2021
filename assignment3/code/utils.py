@@ -121,7 +121,7 @@ def visualize_manifold(decoder, grid_size=20):
     images.append(decoder(z[-(z.shape[0] % 128):].to(decoder.device)).squeeze())
 
     # Apply softmax and fit to readable image format
-    images = torch.stack(images, dim=0).permute(0, 2, 3, 1).flatten(0, 2)
+    images = torch.cat(images, dim=0).permute(0, 2, 3, 1).flatten(0, 2)
     samples = torch.multinomial(F.softmax(images, dim=1), 1).reshape(z.shape[0], 1, 28, 28)
 
     # Generate image grid for plotting
