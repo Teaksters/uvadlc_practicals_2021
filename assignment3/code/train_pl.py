@@ -67,7 +67,7 @@ class VAE(pl.LightningModule):
         # Sample latent space
         std = torch.exp(log_std)
         std.to(self.decoder.device)
-        
+
         z = sample_reparameterize(mean, std)
 
         # Reconstruct image from latent encoding
@@ -81,7 +81,7 @@ class VAE(pl.LightningModule):
         L_reg = KLD(mean, log_std).sum()
 
         # Calculate elbo and transform to bpd
-        elbo = L_rec - L_reg
+        elbo = L_rec + L_reg
         bpd = elbo_to_bpd(elbo, imgs.shape)
 
         # fit to desired dimensions
