@@ -17,6 +17,7 @@
 import torch
 from torchvision.utils import make_grid
 import numpy as np
+import torch.nn.functional as F
 
 
 def sample_reparameterize(mean, std):
