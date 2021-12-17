@@ -33,12 +33,10 @@ def sample_reparameterize(mean, std):
     assert not (std < 0).any().item(), "The reparameterization trick got a negative std as input. " + \
                                        "Are you sure your input is std and not log_std?"
     # Sample noise from normal distribution
-    epsilon = torch.normal(torch.zeros(mean.shape), torch.ones(mean.shape))
+    epsilon = torch.normal(torch.zeros(mean.shape), torch.ones(mean.shape)).float()
     epsilon.to(mean.device)
     # Sample latent space with mean, std and noise
-    z = mean
-    z += std
-    z += epsilon
+    z = mean + epsilon * std
     return z
 
 
