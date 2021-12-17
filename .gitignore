@@ -133,3 +133,5 @@ data/
 chkpts/
 rslts/
 runs/
+VAE_logs/
+results/
