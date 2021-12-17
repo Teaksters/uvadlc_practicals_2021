@@ -66,7 +66,6 @@ class VAE(pl.LightningModule):
 
         # Sample latent space
         std = torch.exp(log_std)
-        std.to(mean.device)
         z = sample_reparameterize(mean, std)
 
         # Reconstruct image from latent encoding
