@@ -36,7 +36,6 @@ def sample_reparameterize(mean, std):
     epsilon = torch.normal(torch.zeros(mean.shape),
                            torch.ones(mean.shape)).to(mean.device)
 
-    print(epsilon.device, mean.device, std.device)
     # Sample latent space with mean, std and noise
     z = mean + epsilon * std
     return z
@@ -68,8 +67,8 @@ def elbo_to_bpd(elbo, img_shape):
         bpd - The negative log likelihood in bits per dimension for the given image.
     """
     # Prepare necessary data types and values
-    d = torch.Tensor(list(img_shape[1:]))
-    log2_e = torch.log2(torch.exp(torch.ones(1)))
+    d = torch.Tensor(list(img_shape[1:])).to(elbo.device)
+    log2_e = torch.log2(torch.exp(torch.ones(1))).to(elbo.device)
 
     # Do the calculation
     bpd = (elbo * log2_e) / torch.prod(d)
