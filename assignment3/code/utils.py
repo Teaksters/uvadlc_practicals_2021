@@ -36,7 +36,9 @@ def sample_reparameterize(mean, std):
     epsilon = torch.normal(torch.zeros(mean.shape), torch.ones(mean.shape))
     epsilon.to(mean.device)
     # Sample latent space with mean, std and noise
-    z = mean + epsilon * std
+    z = mean
+    z += std
+    z += epsilon
     return z
 
 
