@@ -29,7 +29,7 @@ The following variables determine which training file to check.
 - Set TEST_LIGHTNING to True if you are using train_pl.py
 - Set TEST_TORCH to True if you are using train_torch.py
 """
-TEST_LIGHTNING = False
+TEST_LIGHTNING = True
 TEST_TORCH = False
 
 if not (TEST_LIGHTNING or TEST_TORCH):
@@ -210,14 +210,14 @@ class TestVAE(unittest.TestCase):
         np.random.seed(42)
         torch.manual_seed(42)
         if TEST_LIGHTNING:
-            VAEClass = train_pl.VAE 
+            VAEClass = train_pl.VAE
         elif TEST_TORCH:
-            VAEClass = train_torch.VAE 
+            VAEClass = train_torch.VAE
         else:
             print("TestVAE skipped as no train flag has been selected.")
             return
 
-        vae = VAEClass(num_filters=32, 
+        vae = VAEClass(num_filters=32,
                        z_dim=20,
                        lr=1e-3)
         for p in vae.parameters():
@@ -225,7 +225,7 @@ class TestVAE(unittest.TestCase):
 
         rand_img = torch.randint(low=0, high=16, size=(4, 1, 28, 28)).long()
         L_rec, L_reg, bpd = vae(rand_img)
-        
+
         # Testing shapes
         self.assertTrue(len(L_rec.squeeze().shape) == 0,
                         msg="The L_rec output must be a scalar, but has the shape %s." % str(bpd.shape))
@@ -233,7 +233,7 @@ class TestVAE(unittest.TestCase):
                         msg="The L_reg output must be a scalar, but has the shape %s." % str(bpd.shape))
         self.assertTrue(len(bpd.squeeze().shape) == 0,
                         msg="The BPD output must be a scalar, but has the shape %s." % str(bpd.shape))
-        
+
         # Testing values
         true_L_rec = -np.log(0.0625)*784
         self.assertLessEqual(abs(L_rec.item() - true_L_rec), 1e-2,
@@ -244,17 +244,17 @@ class TestVAE(unittest.TestCase):
         true_bpd = 4.0
         self.assertLessEqual(abs(bpd.item() - true_bpd), 1e-5,
                              msg="The BPD output for zero-initialized networks must be %f, but is %f." % (true_bpd, bpd.item()))
-        
+
 
 
 
 if __name__ == '__main__':
     suite = unittest.TestLoader().loadTestsFromTestCase(TestKLD)
     unittest.TextTestRunner(verbosity=2).run(suite)
-
+    #
     suite = unittest.TestLoader().loadTestsFromTestCase(TestReparameterization)
     unittest.TextTestRunner(verbosity=2).run(suite)
-
+    #
     suite = unittest.TestLoader().loadTestsFromTestCase(TestBPD)
     unittest.TextTestRunner(verbosity=2).run(suite)
 
@@ -263,5 +263,3 @@ if __name__ == '__main__':
 
     suite = unittest.TestLoader().loadTestsFromTestCase(TestVAE)
     unittest.TextTestRunner(verbosity=2).run(suite)
-
-

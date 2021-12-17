@@ -46,11 +46,13 @@ class VAE(pl.LightningModule):
         self.encoder = CNNEncoder(z_dim=z_dim, num_filters=num_filters)
         self.decoder = CNNDecoder(z_dim=z_dim, num_filters=num_filters)
 
+        self.z_dim = z_dim
+
     def forward(self, imgs):
         """
         The forward function calculates the VAE-loss for a given batch of images.
         Inputs:
-            imgs - Batch of images of shape [B,C,H,W]. 
+            imgs - Batch of images of shape [B,C,H,W].
                    The input images are converted to 4-bit, i.e. integers between 0 and 15.
         Ouptuts:
             L_rec - The average reconstruction loss of the batch. Shape: single scalar
@@ -58,18 +60,28 @@ class VAE(pl.LightningModule):
             bpd - The average bits per dimension metric of the batch.
                   This is also the loss we train on. Shape: single scalar
         """
+        # Encode the images
+        mean, log_std = self.encoder(imgs)
 
-        # Hints: 
-        # - Implement the empty functions in utils.py before continuing
-        # - The forward run consists of encoding the images, sampling in
-        #   latent space, and decoding.
-        # - You might find loss functions defined in torch.nn.functional 
-        #   helpful for the reconstruction loss
+        # Sample latent space
+        z = sample_reparameterize(mean, torch.exp(log_std))
 
-        L_rec = None
-        L_reg = None
-        bpd = None
-        raise NotImplementedError
+        # Reconstruct image from latent encoding
+        reconstructions = self.decoder(z)
+
+        # Calculate reconstrion loss
+        L_rec = F.cross_entropy(reconstructions, imgs.squeeze(), reduction='sum')
+        L_rec /= reconstructions.shape[0]
+
+        # Calculate Regularization loss
+        L_reg = KLD(mean, log_std).sum()
+
+        # Calculate elbo and transform to bpd
+        elbo = L_rec - L_reg
+        bpd = elbo_to_bpd(elbo, imgs.shape)
+
+        # fit to desired dimensions
+        L_reg = L_reg.mean()
         return L_rec, L_reg, bpd
 
     @torch.no_grad()
@@ -81,8 +93,8 @@ class VAE(pl.LightningModule):
         Outputs:
             x_samples - Sampled, 4-bit images. Shape: [B,C,H,W]
         """
-        x_samples = None
-        raise NotImplementedError
+        z = torch.empty([batch_size, self.z_dim]).normal_(0, 1)
+        x_samples = self.decoder(z)
         return x_samples
 
     def configure_optimizers(self):
@@ -152,8 +164,19 @@ class GenerateCallback(pl.Callback):
         # - Remember converting the 4-bit images to a common image format, e.g. float values between 0 and 1.
         # - Use the torchvision function "make_grid" to create a grid of multiple images
         # - Use the torchvision function "save_image" to save an image grid to disk
+        import matplotlib.pyplot as plt
+        sample_set = {0, 10, 80}
+        if epoch not in sample_set:
+            return 0
 
-        raise NotImplementedError
+        if self.save_to_disk:
+            samples = pl_module.sample(self.batch_size).permute(0,2,3,1).flatten(0, 2)
+            samples = torch.multinomial(F.softmax(samples, dim=1), 1).reshape(self.batch_size, 1, 28, 28)
+            grid = make_grid(samples).float() / 15
+            grid_im = 'samplesEpoch_' + str(epoch) + '.png'
+            trainer.logger.experiment.add_image(grid_im, grid)
+            save_image(grid, os.path.join('results', grid_im))
+        # trainer.logger.log_dir
 
 
 def train_vae(args):
@@ -175,7 +198,7 @@ def train_vae(args):
                          gpus=1 if torch.cuda.is_available() else 0,
                          max_epochs=args.epochs,
                          callbacks=[save_callback, gen_callback],
-                         enable_progress_bar=args.progress_bar) 
+                         enable_progress_bar=args.progress_bar)
     trainer.logger._default_hp_metric = None  # Optional logging argument that we don't need
     if not args.progress_bar:
         print("[INFO] The progress bar has been suppressed. For updates on the training " + \
@@ -224,7 +247,7 @@ if __name__ == '__main__':
                         help='Minibatch size')
 
     # Other hyperparameters
-    parser.add_argument('--data_dir', default='../data/', type=str, 
+    parser.add_argument('--data_dir', default='../data/', type=str,
                         help='Directory where to look for the data. For jobs on Lisa, this should be $TMPDIR.')
     parser.add_argument('--epochs', default=80, type=int,
                         help='Max number of epochs')
@@ -242,4 +265,3 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     train_vae(args)
-

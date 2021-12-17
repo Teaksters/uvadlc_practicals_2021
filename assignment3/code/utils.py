@@ -32,8 +32,10 @@ def sample_reparameterize(mean, std):
     """
     assert not (std < 0).any().item(), "The reparameterization trick got a negative std as input. " + \
                                        "Are you sure your input is std and not log_std?"
-    z = None
-    raise NotImplementedError
+    # Sample noise from normal distribution
+    epsilon = torch.normal(torch.zeros(mean.shape), torch.ones(mean.shape))
+    # Sample latent space with mean, std and noise
+    z = mean + epsilon * std
     return z
 
 
@@ -48,9 +50,8 @@ def KLD(mean, log_std):
         KLD - Tensor with one less dimension than mean and log_std (summed over last dimension).
               The values represent the Kullback-Leibler divergence to unit Gaussians.
     """
-
-    KLD = None
-    raise NotImplementedError
+    KLD = ((torch.exp(log_std).square() + mean.square() - 1 - 2 * log_std) / 2)
+    KLD = KLD.sum(dim=-1)
     return KLD
 
 
@@ -63,8 +64,12 @@ def elbo_to_bpd(elbo, img_shape):
     Outputs:
         bpd - The negative log likelihood in bits per dimension for the given image.
     """
-    bpd = None
-    raise NotImplementedError
+    # Prepare necessary data types and values
+    d = torch.Tensor(list(img_shape[1:]))
+    log2_e = torch.log2(torch.exp(torch.ones(1)))
+
+    # Do the calculation
+    bpd = (elbo * log2_e) / torch.prod(d)
     return bpd
 
 
@@ -87,10 +92,36 @@ def visualize_manifold(decoder, grid_size=20):
     # - Use the range [0.5/grid_size, 1.5/grid_size, ..., (grid_size-0.5)/grid_size] for the percentiles.
     # - torch.meshgrid might be helpful for creating the grid of values
     # - You can use torchvision's function "make_grid" to combine the grid_size**2 images into a grid
-    # - Remember to apply a sigmoid after the decoder
+    # - Remember to apply a softmax after the decoder
 
-    img_grid = None
-    raise NotImplementedError
+    # Generate needed percentiles
+    percentiles = torch.arange(0.5, grid_size, 1) / grid_size
 
+    # Translate to z input type
+    Normal_distribution = torch.distributions.normal.Normal(torch.zeros([1]), torch.ones([1]))
+    unique_values = Normal_distribution.icdf(percentiles)
+
+    # Create all possible input combinations
+    grid_x, grid_y = torch.meshgrid(unique_values, unique_values)
+    z = torch.stack([grid_x.flatten(), grid_y.flatten()], dim=1)
+
+    # Generate sample images
+    images = []
+    for i in range(128, z.shape[0], 128):
+        input = z[i-128:i]
+        input.to(decoder.device)
+
+        # decode images
+        imgs = decoder(input).squeeze()
+        images.append(imgs)
+
+    # Also add the final samples that did not fit in batch
+    images.append(decoder(z[-(z.shape[0] % 128):].to(decoder.device)).squeeze())
+
+    # Apply softmax and fit to readable image format
+    images = torch.stack(images, dim=0).permute(0, 2, 3, 1).flatten(0, 2)
+    samples = torch.multinomial(F.softmax(images, dim=1), 1).reshape(z.shape[0], 1, 28, 28)
+
+    # Generate image grid for plotting
+    img_grid = make_grid(samples).float() / 15
     return img_grid
-
