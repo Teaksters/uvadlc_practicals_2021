@@ -61,6 +61,7 @@ class VAE(pl.LightningModule):
                   This is also the loss we train on. Shape: single scalar
         """
         # Encode the images
+        imgs.to(self.encoder.device)
         mean, log_std = self.encoder(imgs)
 
         # Sample latent space

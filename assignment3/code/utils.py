@@ -34,10 +34,9 @@ def sample_reparameterize(mean, std):
                                        "Are you sure your input is std and not log_std?"
     # Sample noise from normal distribution
     epsilon = torch.normal(torch.zeros(mean.shape), torch.ones(mean.shape))
-    epsilon.to(std.device)
+    epsilon.to(mean.device)
     # Sample latent space with mean, std and noise
-    z = mean * std
-    z *= epsilon
+    z = mean + epsilon * std
     return z
 
 
