@@ -73,14 +73,6 @@ class CNNEncoder(nn.Module):
         log_std = output[:, self.z_dim:]
         return mean, log_std
 
-    @property
-    def device(self):
-        """
-        Property function to get the device on which the decoder is.
-        Might be helpful in other functions.
-        """
-        return next(self.parameters()).device
-
 
 class CNNDecoder(nn.Module):
     def __init__(self, num_input_channels: int = 16, num_filters: int = 32,

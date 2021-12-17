@@ -61,11 +61,13 @@ class VAE(pl.LightningModule):
                   This is also the loss we train on. Shape: single scalar
         """
         # Encode the images
-        imgs.to(self.encoder.device)
+        imgs.to(self.decoder.device)
         mean, log_std = self.encoder(imgs)
 
         # Sample latent space
         std = torch.exp(log_std)
+        std.to(self.decoder.device)
+        
         z = sample_reparameterize(mean, std)
 
         # Reconstruct image from latent encoding
