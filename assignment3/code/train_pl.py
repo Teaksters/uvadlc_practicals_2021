@@ -64,6 +64,7 @@ class VAE(pl.LightningModule):
         mean, log_std = self.encoder(imgs)
 
         # Sample latent space
+        print(mean.device, log_std.device)
         z = sample_reparameterize(mean, torch.exp(log_std))
 
         # Reconstruct image from latent encoding
@@ -94,6 +95,8 @@ class VAE(pl.LightningModule):
             x_samples - Sampled, 4-bit images. Shape: [B,C,H,W]
         """
         z = torch.empty([batch_size, self.z_dim]).normal_(0, 1)
+        z.to(self.decoder.device)
+
         x_samples = self.decoder(z)
         return x_samples
 
