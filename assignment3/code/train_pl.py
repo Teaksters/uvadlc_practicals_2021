@@ -98,7 +98,7 @@ class VAE(pl.LightningModule):
             x_samples - Sampled, 4-bit images. Shape: [B,C,H,W]
         """
         z = torch.empty([batch_size, self.z_dim]).normal_(0, 1)
-        z.to(self.decoder.device)
+        z = z.to(self.decoder.device)
 
         x_samples = self.decoder(z)
         return x_samples
