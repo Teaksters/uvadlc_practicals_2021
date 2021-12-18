@@ -111,7 +111,7 @@ def visualize_manifold(decoder, grid_size=20):
     # Generate sample images
     images = []
     for i in range(128, z.shape[0], 128):
-        input = z[i-128:i]
+        input = z[i-128:i].to(decoder.device)
         input.to(decoder.device)
 
         # decode images
