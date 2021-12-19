@@ -231,6 +231,9 @@ def train_vae(args):
         save_image(img_grid,
                    os.path.join(trainer.logger.log_dir, 'vae_manifold.png'),
                    normalize=False)
+        save_image(img_grid,
+                   os.path.join('results', 'vae_manifold.png'),
+                   normalize=False)
 
     return test_result
 
