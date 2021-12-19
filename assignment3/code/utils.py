@@ -125,5 +125,6 @@ def visualize_manifold(decoder, grid_size=20):
     samples = torch.multinomial(F.softmax(images, dim=1), 1).reshape(z.shape[0], 1, 28, 28)
 
     # Generate image grid for plotting
-    img_grid = make_grid(samples).float() / 15
+    img_grid = make_grid(samples, nrow=grid_size).float() / 15
+    print(img_grid.shape)
     return img_grid

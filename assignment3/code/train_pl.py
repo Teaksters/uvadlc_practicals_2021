@@ -101,6 +101,7 @@ class VAE(pl.LightningModule):
         z = z.to(self.decoder.device)
 
         x_samples = self.decoder(z)
+
         return x_samples
 
     def configure_optimizers(self):
@@ -182,7 +183,6 @@ class GenerateCallback(pl.Callback):
             grid_im = 'samplesEpoch_' + str(epoch) + '.png'
             trainer.logger.experiment.add_image(grid_im, grid)
             save_image(grid, os.path.join('results', grid_im))
-        # trainer.logger.log_dir
 
 
 def train_vae(args):
